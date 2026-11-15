@@ -1,20 +1,44 @@
-// M0: JWT authentication middleware
 import { Request, Response, NextFunction } from 'express';
-import { ApiError } from '../utils/ApiError';
+import { ApiError, ERROR_CODES } from '../utils/ApiError';
 import { verifyAccessToken } from '../utils/tokens';
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
+/**
+ * KNOWN ACCEPTED LIMITATION:
+ * An access token stays valid until it expires (max ACCESS_TOKEN_TTL_MINUTES)
+ * after logout or password change; refresh tokens are revoked immediately in the database.
+ */
+export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
+  const authHeader = req.header('authorization');
+
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next(new ApiError(401, 'Unauthorized: Missing or invalid token'));
+    throw ApiError.unauthorized(
+      ERROR_CODES.UNAUTHORIZED,
+      'Authentication required: missing or invalid Bearer token'
+    );
   }
 
-  const token = authHeader.split(' ')[1];
-  try {
-    const payload = verifyAccessToken(token);
-    req.user = payload;
-    next();
-  } catch {
-    next(new ApiError(401, 'Unauthorized: Token expired or invalid'));
+  const token = authHeader.slice(7).trim();
+  if (!token) {
+    throw ApiError.unauthorized(
+      ERROR_CODES.UNAUTHORIZED,
+      'Authentication required: empty Bearer token'
+    );
   }
-};
+
+  try {
+    const userId = verifyAccessToken(token);
+    req.user = { id: userId };
+    next();
+  } catch (err: any) {
+    if (err?.name === 'TokenExpiredError') {
+      throw ApiError.unauthorized(
+        ERROR_CODES.TOKEN_EXPIRED,
+        'Access token has expired'
+      );
+    }
+    throw ApiError.unauthorized(
+      ERROR_CODES.UNAUTHORIZED,
+      'Invalid or corrupted access token'
+    );
+  }
+}

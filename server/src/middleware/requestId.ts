@@ -1,10 +1,10 @@
-// M0: Request ID middleware
 import { Request, Response, NextFunction } from 'express';
-import { randomUUID } from 'crypto';
+import crypto from 'crypto';
 
-export const requestId = (req: Request, res: Response, next: NextFunction) => {
-  const reqId = (req.headers['x-request-id'] as string) || randomUUID();
-  req.headers['x-request-id'] = reqId;
-  res.setHeader('X-Request-Id', reqId);
+export function requestId(req: Request, res: Response, next: NextFunction): void {
+  const incoming = req.header('x-request-id');
+  const id = incoming && incoming.trim().length > 0 ? incoming.trim() : crypto.randomUUID();
+  req.requestId = id;
+  res.setHeader('X-Request-Id', id);
   next();
-};
+}

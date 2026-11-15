@@ -1,13 +1,36 @@
-// M0: Auth routes
 import { Router } from 'express';
 import * as authController from '../controllers/auth.controller';
 import { validate } from '../middleware/validate';
-import { loginSchema, registerSchema } from '../validators/auth.schema';
+import { registerLimiter, loginLimiter } from '../middleware/rateLimit';
+import { originGuard } from '../middleware/originGuard';
+import { registerSchema, loginSchema } from '../validators/auth.schema';
 
 const router = Router();
 
-router.post('/register', validate(registerSchema), authController.register);
-router.post('/login', validate(loginSchema), authController.login);
-router.post('/refresh-token', authController.refreshToken);
+router.post(
+  '/register',
+  registerLimiter,
+  validate({ body: registerSchema }),
+  authController.register
+);
+
+router.post(
+  '/login',
+  loginLimiter,
+  validate({ body: loginSchema }),
+  authController.login
+);
+
+router.post(
+  '/refresh',
+  originGuard,
+  authController.refresh
+);
+
+router.post(
+  '/logout',
+  originGuard,
+  authController.logout
+);
 
 export default router;

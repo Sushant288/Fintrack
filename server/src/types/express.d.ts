@@ -1,14 +1,17 @@
-// M0: Express request type extension
-export interface AuthUser {
-  id: string;
-  email: string;
-  name?: string;
-}
-
 declare global {
   namespace Express {
     interface Request {
-      user?: AuthUser;
+      user?: {
+        id: string;
+      };
+      requestId: string;
+      validated: {
+        body?: unknown;
+        query?: unknown;
+        params?: unknown;
+      };
     }
   }
 }
+
+export {};
