@@ -1,2 +1,0 @@
--- M9 Migration: Add CHECK constraints
--- e.g. ALTER TABLE "Transaction" ADD CONSTRAINT check_positive_amount CHECK ("amount" > 0);
