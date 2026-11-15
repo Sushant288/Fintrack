@@ -99,14 +99,14 @@ export async function assertCategoryUsable(
 
   if (cat.type !== expectedType) {
     throw ApiError.badRequest(
-      ERROR_CODES.VALIDATION_ERROR,
+      ERROR_CODES.CATEGORY_TYPE_MISMATCH,
       `Category type mismatch; expected ${expectedType} but category is ${cat.type}`
     );
   }
 
   if (cat.isArchived) {
     throw ApiError.badRequest(
-      ERROR_CODES.VALIDATION_ERROR,
+      ERROR_CODES.CATEGORY_ARCHIVED,
       'Archived category cannot be used for new operations'
     );
   }

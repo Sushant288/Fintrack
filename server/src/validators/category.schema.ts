@@ -82,9 +82,14 @@ export const categoryListQuerySchema = z.object({
   q: z.string().trim().optional()
 });
 
-export const categoryDeleteQuerySchema = z.object({
-  reassignTo: z.string().uuid({ message: 'reassignTo must be a valid UUID' }).optional()
-});
+export const categoryDeleteQuerySchema = z
+  .object({
+    reassignTo: z.string().uuid({ message: 'reassignTo must be a valid UUID' }).optional(),
+    reassignToCategoryId: z.string().uuid({ message: 'reassignToCategoryId must be a valid UUID' }).optional()
+  })
+  .transform((val) => ({
+    reassignTo: val.reassignTo ?? val.reassignToCategoryId
+  }));
 
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;

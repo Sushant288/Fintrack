@@ -5,7 +5,21 @@
  * a PostgreSQL CHECK constraint from Phase 1 migrations.
  */
 
+// Mirrors Decimal(12,2) from Phase 1 schema
+const MONEY_PRECISION = 12;
+const MONEY_SCALE = 2;
+const intDigits = MONEY_PRECISION - MONEY_SCALE;
+const MONEY_MAX = `${'9'.repeat(intDigits)}.${'9'.repeat(MONEY_SCALE)}`;
+const MONEY_REGEX = new RegExp(`^\\d+(\\.\\d{1,${MONEY_SCALE}})?$`);
+
 export const LIMITS = {
+  MONEY: {
+    PRECISION: MONEY_PRECISION,
+    SCALE: MONEY_SCALE,
+    MAX: MONEY_MAX,
+    REGEX: MONEY_REGEX
+  },
+
   USER: {
     // Mirrors User_name_chk: CHECK (char_length(btrim(name)) BETWEEN 1 AND 60)
     NAME_MIN_LENGTH: 1,
@@ -56,7 +70,41 @@ export const LIMITS = {
     MAX_TREE_DEPTH: 2
   },
 
+  TRANSACTION: {
+    // Mirrors Transaction.description @db.VarChar(255)
+    DESCRIPTION_MAX: 255,
+    // From problem statement: maximum 10 years past for transaction date
+    MAX_PAST_YEARS: 10,
+    // Allowed sort fields for transactions query
+    SORT_FIELDS: ['date', 'amount', 'createdAt'] as const,
+    DEFAULT_SORT: 'date:desc',
+    // Max items in a single bulk-delete call
+    BULK_DELETE_MAX: 50
+  },
+
+  BUDGET: {
+    // Mirrors Budget_year_chk: CHECK (year BETWEEN 2000 AND 2100)
+    YEAR_MIN: 2000,
+    YEAR_MAX: 2100
+  },
+
+  ALERT: {
+    // Mirrors Alert.message @db.VarChar(255)
+    MESSAGE_MAX: 255
+  },
+
+  DB: {
+    TRANSACTION_TIMEOUT_MS: 15000,
+    TRANSACTION_MAX_WAIT_MS: 5000
+  },
+
+  PERF: {
+    // From success criteria: read target within 300 ms
+    READ_TARGET_MS: 300
+  },
+
   PAGINATION: {
+    DEFAULT_PAGE: 1,
     DEFAULT_PAGE_SIZE: 20,
     MAX_PAGE_SIZE: 100
   }

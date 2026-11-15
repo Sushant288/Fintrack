@@ -24,7 +24,17 @@ export const ERROR_CODES = {
   CONFLICT: 'CONFLICT',
   PAYLOAD_TOO_LARGE: 'PAYLOAD_TOO_LARGE',
   RATE_LIMITED: 'RATE_LIMITED',
-  INTERNAL_ERROR: 'INTERNAL_ERROR'
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+
+  // Module B2 error codes
+  DATE_IN_FUTURE: 'DATE_IN_FUTURE',
+  DATE_TOO_OLD: 'DATE_TOO_OLD',
+  CATEGORY_TYPE_MISMATCH: 'CATEGORY_TYPE_MISMATCH',
+  CATEGORY_ARCHIVED: 'CATEGORY_ARCHIVED',
+  INVALID_BUDGET_COPY: 'INVALID_BUDGET_COPY',
+  TRANSACTION_NOT_FOUND: 'TRANSACTION_NOT_FOUND',
+  BUDGET_NOT_FOUND: 'BUDGET_NOT_FOUND',
+  ALERT_NOT_FOUND: 'ALERT_NOT_FOUND'
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
@@ -56,7 +66,17 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   CONFLICT: 'Resource conflict occurred',
   PAYLOAD_TOO_LARGE: 'Request payload exceeds size limit',
   RATE_LIMITED: 'Too many requests; please try again later',
-  INTERNAL_ERROR: 'An unexpected internal server error occurred'
+  INTERNAL_ERROR: 'An unexpected internal server error occurred',
+
+  // Module B2 error messages
+  DATE_IN_FUTURE: 'Transaction date cannot be in the future',
+  DATE_TOO_OLD: 'Transaction date is further in the past than allowed',
+  CATEGORY_TYPE_MISMATCH: 'Category transaction type does not match transaction type',
+  CATEGORY_ARCHIVED: 'Archived category cannot be used for new operations',
+  INVALID_BUDGET_COPY: 'Source and target budget periods cannot be identical',
+  TRANSACTION_NOT_FOUND: 'Transaction not found',
+  BUDGET_NOT_FOUND: 'Budget not found',
+  ALERT_NOT_FOUND: 'Alert not found'
 };
 
 export class ApiError extends Error {

@@ -12,6 +12,7 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test:b1": "tsx tests/smoke/b1.smoke.ts",
+    "test:b2": "tsx tests/smoke/b2.smoke.ts",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
