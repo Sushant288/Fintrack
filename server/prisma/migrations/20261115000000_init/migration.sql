@@ -1,0 +1,2 @@
+-- M0 Initial migration
+-- Generated migration for 11 core tables
