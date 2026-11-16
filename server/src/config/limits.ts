@@ -93,6 +93,41 @@ export const LIMITS = {
     MESSAGE_MAX: 255
   },
 
+  RECURRING: {
+    // Maximum recurring rules allowed per user
+    MAX_RULES_PER_USER: 20,
+    // How far ahead a startDate may be from today
+    MAX_FUTURE_YEARS: 2,
+    // Number of upcoming occurrences previewed in GET /recurring/:id
+    PREVIEW_COUNT: 5,
+    // Maximum occurrences processed per rule per execution run
+    MAX_OCCURRENCES_PER_RUN: 50,
+    // Keyset page size for batch job execution
+    JOB_PAGE_SIZE: 50
+  },
+
+  JOB: {
+    // Retry attempts for transient deadlock/serialization failures
+    MAX_RETRIES: 3,
+    // Exponential backoff base delay in milliseconds
+    RETRY_BASE_MS: 200,
+    // Inactivity threshold before an interrupted RUNNING job is marked stale (minutes)
+    STALE_AFTER_MIN: 15,
+    // Mirrors JobRun.errorMessage @db.Text / safe storage truncation length
+    ERROR_MESSAGE_MAX: 255
+  },
+
+  GOALS: {
+    // Maximum savings goals allowed per user
+    MAX_PER_USER: 20,
+    // Mirrors SavingsGoal.name @db.VarChar(80)
+    NAME_MAX: 80,
+    // Mirrors GoalContribution.note @db.VarChar(255)
+    NOTE_MAX: 255,
+    // Allowed goal contribution operation kinds
+    CONTRIBUTION_KINDS: ['DEPOSIT', 'WITHDRAWAL'] as const
+  },
+
   DB: {
     TRANSACTION_TIMEOUT_MS: 15000,
     TRANSACTION_MAX_WAIT_MS: 5000

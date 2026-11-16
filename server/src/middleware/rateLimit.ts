@@ -53,3 +53,14 @@ export const loginLimiter = rateLimit({
   },
   handler: rateLimitHandler('Too many failed login attempts, please try again later.')
 });
+
+export const processLimiter = rateLimit({
+  windowMs: env.PROCESS_RATE_WINDOW_MIN * 60 * 1000,
+  limit: env.PROCESS_RATE_MAX,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.user?.id || req.ip || req.socket?.remoteAddress || 'unknown';
+  },
+  handler: rateLimitHandler('Too many recurring processing requests, please try again later.')
+});

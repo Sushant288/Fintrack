@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import path from 'path';
+import cron from 'node-cron';
 import { z } from 'zod';
 
 // Load .env relative to current process cwd or config file
@@ -8,7 +8,23 @@ dotenv.config();
 const rawEnv = process.env;
 const defaultSameSite = rawEnv.NODE_ENV === 'production' ? 'strict' : 'lax';
 
-const envSchema = z
+const booleanString = (defaultValue: boolean) =>
+  z
+    .union([z.boolean(), z.string()])
+    .default(defaultValue)
+    .transform((val, ctx) => {
+      if (typeof val === 'boolean') return val;
+      const lower = val.trim().toLowerCase();
+      if (lower === 'true' || lower === '1') return true;
+      if (lower === 'false' || lower === '0') return false;
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Expected boolean string "true" or "false", got "${val}"`
+      });
+      return z.NEVER;
+    });
+
+export const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().positive().default(4000),
@@ -30,7 +46,20 @@ const envSchema = z
     AUTH_RATE_WINDOW_MIN: z.coerce.number().int().positive().default(15),
     REGISTER_RATE_MAX: z.coerce.number().int().positive().default(10),
     REGISTER_RATE_WINDOW_MIN: z.coerce.number().int().positive().default(60),
-    LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info')
+    LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+
+    // Module B3: Jobs & Scheduler settings
+    JOBS_ENABLED: booleanString(true),
+    RUN_JOBS_ON_STARTUP: booleanString(true),
+    RECURRING_CRON: z
+      .string()
+      .trim()
+      .default('5 * * * *')
+      .refine((val) => cron.validate(val), {
+        message: 'RECURRING_CRON must be a valid cron expression'
+      }),
+    PROCESS_RATE_MAX: z.coerce.number().int().positive().default(6),
+    PROCESS_RATE_WINDOW_MIN: z.coerce.number().int().positive().default(1)
   })
   .superRefine((data, ctx) => {
     // Validate CLIENT_URL list

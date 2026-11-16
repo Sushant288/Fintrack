@@ -34,7 +34,19 @@ export const ERROR_CODES = {
   INVALID_BUDGET_COPY: 'INVALID_BUDGET_COPY',
   TRANSACTION_NOT_FOUND: 'TRANSACTION_NOT_FOUND',
   BUDGET_NOT_FOUND: 'BUDGET_NOT_FOUND',
-  ALERT_NOT_FOUND: 'ALERT_NOT_FOUND'
+  ALERT_NOT_FOUND: 'ALERT_NOT_FOUND',
+
+  // Module B3 error codes
+  RULE_NOT_FOUND: 'RULE_NOT_FOUND',
+  GOAL_NOT_FOUND: 'GOAL_NOT_FOUND',
+  RULE_COMPLETED: 'RULE_COMPLETED',
+  RULE_ALREADY_STARTED: 'RULE_ALREADY_STARTED',
+  RULE_LIMIT_REACHED: 'RULE_LIMIT_REACHED',
+  GOAL_LIMIT_REACHED: 'GOAL_LIMIT_REACHED',
+  GOAL_ARCHIVED: 'GOAL_ARCHIVED',
+  INSUFFICIENT_GOAL_FUNDS: 'INSUFFICIENT_GOAL_FUNDS',
+  INVALID_DEADLINE: 'INVALID_DEADLINE',
+  DATE_TOO_FAR_FUTURE: 'DATE_TOO_FAR_FUTURE'
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
@@ -76,7 +88,19 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   INVALID_BUDGET_COPY: 'Source and target budget periods cannot be identical',
   TRANSACTION_NOT_FOUND: 'Transaction not found',
   BUDGET_NOT_FOUND: 'Budget not found',
-  ALERT_NOT_FOUND: 'Alert not found'
+  ALERT_NOT_FOUND: 'Alert not found',
+
+  // Module B3 error messages
+  RULE_NOT_FOUND: 'Recurring rule not found',
+  GOAL_NOT_FOUND: 'Savings goal not found',
+  RULE_COMPLETED: 'Recurring rule is completed and cannot be modified or resumed',
+  RULE_ALREADY_STARTED: 'Start date cannot be modified after transactions have been generated',
+  RULE_LIMIT_REACHED: 'Maximum number of recurring rules reached',
+  GOAL_LIMIT_REACHED: 'Maximum number of savings goals reached',
+  GOAL_ARCHIVED: 'Archived savings goal cannot be modified or receive contributions',
+  INSUFFICIENT_GOAL_FUNDS: 'Withdrawal amount exceeds available savings goal balance',
+  INVALID_DEADLINE: 'Goal deadline must be after today',
+  DATE_TOO_FAR_FUTURE: 'Start date is too far in the future'
 };
 
 export class ApiError extends Error {

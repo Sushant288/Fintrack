@@ -19,7 +19,7 @@ export function normalizeDescription(val: unknown): string | null {
   return cleaned.length > 0 ? cleaned : null;
 }
 
-const descriptionSchema = z
+export const descriptionSchema = z
   .union([z.string(), z.null(), z.undefined()])
   .transform(normalizeDescription)
   .refine(
@@ -71,6 +71,7 @@ export const listTransactionsQuerySchema = z
     type: z.nativeEnum(TxType).optional(),
     categoryId: z.string().uuid().optional(),
     paymentMethod: z.nativeEnum(PaymentMethod).optional(),
+    recurringId: z.string().uuid().optional(),
     minAmount: moneyAmount.optional(),
     maxAmount: moneyAmount.optional(),
     q: z.string().trim().optional(),

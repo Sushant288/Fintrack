@@ -3,9 +3,17 @@ import { env } from './config/env';
 import app from './app';
 import { prisma } from './config/prisma';
 import { logger } from './utils/logger';
+import { startJobs, stopJobs } from './jobs';
 
-const server = app.listen(env.PORT, () => {
+const server = app.listen(env.PORT, async () => {
   logger.info(`FinTrack server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+  try {
+    await startJobs();
+  } catch (err: unknown) {
+    logger.error('Failed to start scheduled background jobs', {
+      error: err instanceof Error ? err.message : String(err)
+    });
+  }
 });
 
 let isShuttingDown = false;
@@ -25,8 +33,9 @@ async function handleShutdown(signal: string): Promise<void> {
   server.close(async () => {
     logger.info('HTTP server connection pool closed.');
     try {
+      await stopJobs();
       await prisma.$disconnect();
-      logger.info('Prisma database connection closed successfully.');
+      logger.info('Background jobs stopped and Prisma database connection closed successfully.');
       clearTimeout(timer);
       process.exit(0);
     } catch (err: unknown) {

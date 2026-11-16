@@ -298,6 +298,7 @@ export class TransactionService {
       ...(query.type ? { type: query.type } : {}),
       ...(query.categoryId ? { categoryId: query.categoryId } : {}),
       ...(query.paymentMethod ? { paymentMethod: query.paymentMethod } : {}),
+      ...(query.recurringId ? { recurringId: query.recurringId } : {}),
       ...(query.minAmount || query.maxAmount
         ? {
             amount: {

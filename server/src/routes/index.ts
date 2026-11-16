@@ -8,6 +8,8 @@ import categoryRoutes from './category.routes';
 import transactionRoutes from './transaction.routes';
 import budgetRoutes from './budget.routes';
 import alertRoutes from './alert.routes';
+import recurringRoutes from './recurring.routes';
+import goalRoutes from './goal.routes';
 
 const router = Router();
 
@@ -39,5 +41,7 @@ router.use('/categories', categoryRoutes);
 router.use('/transactions', requireAuth, transactionRoutes);
 router.use('/budgets', requireAuth, budgetRoutes);
 router.use('/alerts', requireAuth, alertRoutes);
+router.use('/recurring', requireAuth, recurringRoutes);
+router.use('/goals', requireAuth, goalRoutes);
 
 export default router;
