@@ -12,10 +12,10 @@ A full-stack personal finance tracker designed for budgeting, expense tracking, 
 ```
 fintrack/
 ├── .github/workflows/ci.yml           # CI lint + test pipeline
-├── server/                            # Express + Prisma Backend
+├── backend/                           # Express + Prisma Backend
 │   ├── prisma/                        # Database schema, migrations, and seeds
 │   ├── src/                           # Application source code
 │   └── tests/                         # Unit, integration, and job tests
-└── client/                            # React + Vite Frontend
+└── frontend/                          # React + Vite Frontend
     └── src/                           # UI components, pages, hooks, state
 ```

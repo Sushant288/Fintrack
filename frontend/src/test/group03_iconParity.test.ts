@@ -6,7 +6,7 @@ import { Tag } from 'lucide-react';
 
 describe('Group 3: ICON PARITY', () => {
   it('every icon slug used in server category.defaults.ts exists in client categoryIcons registry', () => {
-    const defaultsPath = path.resolve(process.cwd(), '../server/src/services/category.defaults.ts');
+    const defaultsPath = path.resolve(process.cwd(), '../backend/src/services/category.defaults.ts');
     expect(fs.existsSync(defaultsPath)).toBe(true);
     const content = fs.readFileSync(defaultsPath, 'utf-8');
 

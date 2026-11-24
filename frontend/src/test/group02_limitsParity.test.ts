@@ -4,7 +4,7 @@ import path from 'path';
 
 describe('Group 2: LIMITS PARITY', () => {
   it('asserts parity between server limits.ts and client limits.ts for shared numeric exports', () => {
-    const serverLimitsPath = path.resolve(process.cwd(), '../server/src/config/limits.ts');
+    const serverLimitsPath = path.resolve(process.cwd(), '../backend/src/config/limits.ts');
     expect(fs.existsSync(serverLimitsPath)).toBe(true);
     const serverContent = fs.readFileSync(serverLimitsPath, 'utf-8');
     const clientLimitsPath = path.resolve(__dirname, '../config/limits.ts');

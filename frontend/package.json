@@ -1,5 +1,5 @@
 {
-  "name": "fintrack-client",
+  "name": "fintrack-frontend",
   "private": true,
   "version": "1.0.0",
   "type": "module",

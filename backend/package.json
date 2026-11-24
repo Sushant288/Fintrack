@@ -1,5 +1,5 @@
 {
-  "name": "fintrack-server",
+  "name": "fintrack-backend",
   "version": "1.0.0",
   "description": "Fintrack backend API service",
   "main": "dist/server.js",
