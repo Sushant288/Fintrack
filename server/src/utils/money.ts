@@ -80,3 +80,49 @@ export function reachedThreshold(
 ): boolean {
   return spent.mul(100).gte(budget.mul(thresholdPct));
 }
+
+/**
+ * Computes the percentage change between a current value and a previous value.
+ * Returns null if previous is zero or non-positive. Rounded to 1 decimal place.
+ */
+export function percentChange(
+  current: Prisma.Decimal | string | number,
+  previous: Prisma.Decimal | string | number
+): number | null {
+  const cur = current instanceof Prisma.Decimal ? current : new Prisma.Decimal(current);
+  const prev = previous instanceof Prisma.Decimal ? previous : new Prisma.Decimal(previous);
+
+  if (prev.isZero()) {
+    return null;
+  }
+
+  const change = cur
+    .sub(prev)
+    .mul(100)
+    .div(prev)
+    .toDecimalPlaces(1, Prisma.Decimal.ROUND_HALF_UP);
+  return change.toNumber();
+}
+
+/**
+ * Computes the savings rate as ((income - expense) / income) * 100 rounded to 1 decimal place.
+ * Returns null if income <= 0.
+ */
+export function savingsRate(
+  income: Prisma.Decimal | string | number,
+  expense: Prisma.Decimal | string | number
+): number | null {
+  const inc = income instanceof Prisma.Decimal ? income : new Prisma.Decimal(income);
+  const exp = expense instanceof Prisma.Decimal ? expense : new Prisma.Decimal(expense);
+
+  if (inc.lte(0)) {
+    return null;
+  }
+
+  const rate = inc
+    .sub(exp)
+    .mul(100)
+    .div(inc)
+    .toDecimalPlaces(1, Prisma.Decimal.ROUND_HALF_UP);
+  return rate.toNumber();
+}

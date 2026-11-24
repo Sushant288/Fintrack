@@ -64,57 +64,68 @@ export const updateTransactionSchema = z
     message: 'At least one field must be provided for update'
   });
 
-export const listTransactionsQuerySchema = z
-  .object({
-    from: ymdDate.optional(),
-    to: ymdDate.optional(),
-    type: z.nativeEnum(TxType).optional(),
-    categoryId: z.string().uuid().optional(),
-    paymentMethod: z.nativeEnum(PaymentMethod).optional(),
-    recurringId: z.string().uuid().optional(),
-    minAmount: moneyAmount.optional(),
-    maxAmount: moneyAmount.optional(),
-    q: z.string().trim().optional(),
-    page: z.coerce
-      .number()
-      .int()
-      .positive()
-      .default(LIMITS.PAGINATION.DEFAULT_PAGE),
-    limit: z.coerce
-      .number()
-      .int()
-      .positive()
-      .max(LIMITS.PAGINATION.MAX_PAGE_SIZE)
-      .default(LIMITS.PAGINATION.DEFAULT_PAGE_SIZE),
-    sort: sortParam(LIMITS.TRANSACTION.SORT_FIELDS, LIMITS.TRANSACTION.DEFAULT_SORT)
-  })
-  .strip()
-  .refine(
-    (q) => {
-      if (!q.from || !q.to) return true;
-      return q.from <= q.to;
-    },
-    {
-      message: 'from date cannot be after to date',
-      path: ['from']
-    }
-  )
-  .refine(
-    (q) => {
-      if (!q.minAmount || !q.maxAmount) return true;
-      try {
-        const min = new Prisma.Decimal(q.minAmount);
-        const max = new Prisma.Decimal(q.maxAmount);
-        return min.lte(max);
-      } catch {
-        return false;
+export const transactionFilterFields = {
+  from: ymdDate.optional(),
+  to: ymdDate.optional(),
+  type: z.nativeEnum(TxType).optional(),
+  categoryId: z.string().uuid().optional(),
+  paymentMethod: z.nativeEnum(PaymentMethod).optional(),
+  recurringId: z.string().uuid().optional(),
+  importBatchId: z.string().uuid().optional(),
+  minAmount: moneyAmount.optional(),
+  maxAmount: moneyAmount.optional(),
+  q: z.string().trim().optional()
+};
+
+export function refineTransactionFilters<T extends z.ZodTypeAny>(schema: T): T {
+  return schema
+    .refine(
+      (q: any) => {
+        if (!q.from || !q.to) return true;
+        return q.from <= q.to;
+      },
+      {
+        message: 'from date cannot be after to date',
+        path: ['from']
       }
-    },
-    {
-      message: 'minAmount cannot be greater than maxAmount',
-      path: ['minAmount']
-    }
-  );
+    )
+    .refine(
+      (q: any) => {
+        if (!q.minAmount || !q.maxAmount) return true;
+        try {
+          const min = new Prisma.Decimal(q.minAmount);
+          const max = new Prisma.Decimal(q.maxAmount);
+          return min.lte(max);
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: 'minAmount cannot be greater than maxAmount',
+        path: ['minAmount']
+      }
+    ) as unknown as T;
+}
+
+export const listTransactionsQuerySchema = refineTransactionFilters(
+  z
+    .object({
+      ...transactionFilterFields,
+      page: z.coerce
+        .number()
+        .int()
+        .positive()
+        .default(LIMITS.PAGINATION.DEFAULT_PAGE),
+      limit: z.coerce
+        .number()
+        .int()
+        .positive()
+        .max(LIMITS.PAGINATION.MAX_PAGE_SIZE)
+        .default(LIMITS.PAGINATION.DEFAULT_PAGE_SIZE),
+      sort: sortParam(LIMITS.TRANSACTION.SORT_FIELDS, LIMITS.TRANSACTION.DEFAULT_SORT)
+    })
+    .strip()
+);
 
 export const bulkDeleteTransactionsSchema = z
   .object({

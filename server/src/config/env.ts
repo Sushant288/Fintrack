@@ -59,7 +59,40 @@ export const envSchema = z
         message: 'RECURRING_CRON must be a valid cron expression'
       }),
     PROCESS_RATE_MAX: z.coerce.number().int().positive().default(6),
-    PROCESS_RATE_WINDOW_MIN: z.coerce.number().int().positive().default(1)
+    PROCESS_RATE_WINDOW_MIN: z.coerce.number().int().positive().default(1),
+
+    // Module B4: Scheduled jobs, rate limits, and email delivery
+    REPORT_CRON: z
+      .string()
+      .trim()
+      .default('15 2 1 * *')
+      .refine((val) => cron.validate(val), {
+        message: 'REPORT_CRON must be a valid cron expression'
+      }),
+    CLEANUP_CRON: z
+      .string()
+      .trim()
+      .default('30 3 * * *')
+      .refine((val) => cron.validate(val), {
+        message: 'CLEANUP_CRON must be a valid cron expression'
+      }),
+    DIGEST_CRON: z
+      .string()
+      .trim()
+      .default('0 8 * * *')
+      .refine((val) => cron.validate(val), {
+        message: 'DIGEST_CRON must be a valid cron expression'
+      }),
+    IMPORT_RATE_MAX: z.coerce.number().int().positive().default(10),
+    IMPORT_RATE_WINDOW_MIN: z.coerce.number().int().positive().default(15),
+    HEAVY_RATE_MAX: z.coerce.number().int().positive().default(20),
+    HEAVY_RATE_WINDOW_MIN: z.coerce.number().int().positive().default(15),
+    SMTP_HOST: z.string().trim().optional(),
+    SMTP_PORT: z.coerce.number().int().positive().default(587),
+    SMTP_SECURE: booleanString(false),
+    SMTP_USER: z.string().trim().optional(),
+    SMTP_PASS: z.string().trim().optional(),
+    MAIL_FROM: z.string().trim().optional()
   })
   .superRefine((data, ctx) => {
     // Validate CLIENT_URL list
@@ -97,6 +130,25 @@ export const envSchema = z
         message: 'COOKIE_SAMESITE=none requires NODE_ENV=production because it forces secure=true'
       });
     }
+
+    // SMTP validation
+    const hasSmtpUser = Boolean(data.SMTP_USER);
+    const hasSmtpPass = Boolean(data.SMTP_PASS);
+    if (hasSmtpUser !== hasSmtpPass) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['SMTP_USER'],
+        message: 'SMTP_USER and SMTP_PASS must be both set or both absent'
+      });
+    }
+
+    if (data.SMTP_HOST && !data.MAIL_FROM) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['MAIL_FROM'],
+        message: 'MAIL_FROM is required when SMTP_HOST is configured'
+      });
+    }
   });
 
 const result = envSchema.safeParse(rawEnv);
@@ -130,7 +182,8 @@ const clientOrigins = parsedEnv.CLIENT_URL.split(',')
 
 export const env = {
   ...parsedEnv,
-  CLIENT_ORIGINS: clientOrigins
+  CLIENT_ORIGINS: clientOrigins,
+  EMAIL_ENABLED: Boolean(parsedEnv.SMTP_HOST)
 };
 
 export type Env = typeof env;

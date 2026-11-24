@@ -7,7 +7,13 @@ import {
   UpdateTransactionInput
 } from '../validators/transaction.schema';
 import { ApiError, ERROR_CODES } from '../utils/ApiError';
-import { formatYmd, parseYmd, subtractYears, todayInTimeZone } from '../utils/dates';
+import {
+  dateBoundsError,
+  formatYmd,
+  parseYmd,
+  subtractYears,
+  todayInTimeZone
+} from '../utils/dates';
 import { formatMoney, parseMoney } from '../utils/money';
 import { AlertDto, evaluateBudgetsForSpend, loadAlertPrefs } from './alert.service';
 import { assertCategoryUsable } from './category.service';
@@ -31,6 +37,57 @@ export interface TransactionDto {
   importBatchId: string | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export type TransactionFilters = {
+  from?: string;
+  to?: string;
+  type?: TxType;
+  categoryId?: string;
+  paymentMethod?: PaymentMethod;
+  recurringId?: string;
+  importBatchId?: string;
+  minAmount?: string;
+  maxAmount?: string;
+  q?: string;
+};
+
+export function buildTransactionWhere(
+  userId: string,
+  query: TransactionFilters
+): Prisma.TransactionWhereInput {
+  return {
+    userId,
+    ...(query.from || query.to
+      ? {
+          date: {
+            gte: query.from ? parseYmd(query.from) : undefined,
+            lte: query.to ? parseYmd(query.to) : undefined
+          }
+        }
+      : {}),
+    ...(query.type ? { type: query.type } : {}),
+    ...(query.categoryId ? { categoryId: query.categoryId } : {}),
+    ...(query.paymentMethod ? { paymentMethod: query.paymentMethod } : {}),
+    ...(query.recurringId ? { recurringId: query.recurringId } : {}),
+    ...(query.importBatchId ? { importBatchId: query.importBatchId } : {}),
+    ...(query.minAmount || query.maxAmount
+      ? {
+          amount: {
+            gte: query.minAmount ? parseMoney(query.minAmount) : undefined,
+            lte: query.maxAmount ? parseMoney(query.maxAmount) : undefined
+          }
+        }
+      : {}),
+    ...(query.q
+      ? {
+          description: {
+            contains: query.q.replace(/[%_\\]/g, '\\$&'),
+            mode: 'insensitive'
+          }
+        }
+      : {})
+  };
 }
 
 export function toTransactionDto(row: any): TransactionDto {
@@ -66,13 +123,13 @@ async function assertValidTransactionDate(
 ): Promise<void> {
   const prefs = await loadAlertPrefs(client, userId);
   const today = todayInTimeZone(prefs.timezone);
-  const oldestAllowed = subtractYears(today, LIMITS.TRANSACTION.MAX_PAST_YEARS);
+  const err = dateBoundsError(dateYmd, today, LIMITS.TRANSACTION.MAX_PAST_YEARS);
 
-  if (dateYmd > today) {
+  if (err === 'DATE_IN_FUTURE') {
     throw ApiError.badRequest(ERROR_CODES.DATE_IN_FUTURE, 'Transaction date cannot be in the future');
   }
 
-  if (dateYmd < oldestAllowed) {
+  if (err === 'DATE_TOO_OLD') {
     throw ApiError.badRequest(
       ERROR_CODES.DATE_TOO_OLD,
       `Transaction date cannot be older than ${LIMITS.TRANSACTION.MAX_PAST_YEARS} years`
@@ -285,37 +342,7 @@ export class TransactionService {
       totals: { income: string; expense: string; net: string };
     };
   }> {
-    const where: Prisma.TransactionWhereInput = {
-      userId,
-      ...(query.from || query.to
-        ? {
-            date: {
-              gte: query.from ? parseYmd(query.from) : undefined,
-              lte: query.to ? parseYmd(query.to) : undefined
-            }
-          }
-        : {}),
-      ...(query.type ? { type: query.type } : {}),
-      ...(query.categoryId ? { categoryId: query.categoryId } : {}),
-      ...(query.paymentMethod ? { paymentMethod: query.paymentMethod } : {}),
-      ...(query.recurringId ? { recurringId: query.recurringId } : {}),
-      ...(query.minAmount || query.maxAmount
-        ? {
-            amount: {
-              gte: query.minAmount ? parseMoney(query.minAmount) : undefined,
-              lte: query.maxAmount ? parseMoney(query.maxAmount) : undefined
-            }
-          }
-        : {}),
-      ...(query.q
-        ? {
-            description: {
-              contains: query.q.replace(/[%_\\]/g, '\\$&'),
-              mode: 'insensitive'
-            }
-          }
-        : {})
-    };
+    const where = buildTransactionWhere(userId, query);
 
     const orderBy: Prisma.TransactionOrderByWithRelationInput[] = [
       { [query.sort.field]: query.sort.dir },

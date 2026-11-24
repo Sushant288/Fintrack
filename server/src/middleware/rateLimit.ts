@@ -64,3 +64,19 @@ export const processLimiter = rateLimit({
   },
   handler: rateLimitHandler('Too many recurring processing requests, please try again later.')
 });
+
+export const importLimiter = rateLimit({
+  windowMs: env.IMPORT_RATE_WINDOW_MIN * 60 * 1000,
+  limit: env.IMPORT_RATE_MAX,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: rateLimitHandler('Too many import requests, please try again later.')
+});
+
+export const heavyLimiter = rateLimit({
+  windowMs: env.HEAVY_RATE_WINDOW_MIN * 60 * 1000,
+  limit: env.HEAVY_RATE_MAX,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: rateLimitHandler('Too many heavy requests, please try again later.')
+});

@@ -46,7 +46,21 @@ export const ERROR_CODES = {
   GOAL_ARCHIVED: 'GOAL_ARCHIVED',
   INSUFFICIENT_GOAL_FUNDS: 'INSUFFICIENT_GOAL_FUNDS',
   INVALID_DEADLINE: 'INVALID_DEADLINE',
-  DATE_TOO_FAR_FUTURE: 'DATE_TOO_FAR_FUTURE'
+  DATE_TOO_FAR_FUTURE: 'DATE_TOO_FAR_FUTURE',
+
+  // Module B4 error codes
+  IMPORT_FILE_REQUIRED: 'IMPORT_FILE_REQUIRED',
+  IMPORT_FILE_INVALID: 'IMPORT_FILE_INVALID',
+  IMPORT_FILE_EMPTY: 'IMPORT_FILE_EMPTY',
+  IMPORT_ROW_LIMIT_EXCEEDED: 'IMPORT_ROW_LIMIT_EXCEEDED',
+  IMPORT_INVALID_MAPPING: 'IMPORT_INVALID_MAPPING',
+  IMPORT_BATCH_NOT_FOUND: 'IMPORT_BATCH_NOT_FOUND',
+  IMPORT_CANNOT_UNDO: 'IMPORT_CANNOT_UNDO',
+  EXPORT_TOO_LARGE: 'EXPORT_TOO_LARGE',
+  REPORT_NOT_FOUND: 'REPORT_NOT_FOUND',
+  REPORT_YEAR_INVALID: 'REPORT_YEAR_INVALID',
+  REPORT_MONTH_INVALID: 'REPORT_MONTH_INVALID',
+  RANGE_TOO_LARGE: 'RANGE_TOO_LARGE'
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
@@ -100,7 +114,21 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   GOAL_ARCHIVED: 'Archived savings goal cannot be modified or receive contributions',
   INSUFFICIENT_GOAL_FUNDS: 'Withdrawal amount exceeds available savings goal balance',
   INVALID_DEADLINE: 'Goal deadline must be after today',
-  DATE_TOO_FAR_FUTURE: 'Start date is too far in the future'
+  DATE_TOO_FAR_FUTURE: 'Start date is too far in the future',
+
+  // Module B4 error messages
+  IMPORT_FILE_REQUIRED: 'No file was uploaded',
+  IMPORT_FILE_INVALID: 'Uploaded file is not a valid CSV file',
+  IMPORT_FILE_EMPTY: 'CSV file contains no data rows',
+  IMPORT_ROW_LIMIT_EXCEEDED: 'CSV file exceeds maximum row limit',
+  IMPORT_INVALID_MAPPING: 'Invalid or incomplete column mapping',
+  IMPORT_BATCH_NOT_FOUND: 'Import batch not found',
+  IMPORT_CANNOT_UNDO: 'Import batch cannot be undone',
+  EXPORT_TOO_LARGE: 'Export row count exceeds maximum allowed limit',
+  REPORT_NOT_FOUND: 'Report not found',
+  REPORT_YEAR_INVALID: 'Invalid report year requested',
+  REPORT_MONTH_INVALID: 'Invalid report month requested',
+  RANGE_TOO_LARGE: 'Date range requested exceeds allowed maximum'
 };
 
 export class ApiError extends Error {

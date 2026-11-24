@@ -45,7 +45,7 @@ app.use(
     },
     credentials: true,
     allowedHeaders: ['Authorization', 'Content-Type'],
-    exposedHeaders: ['X-Request-Id'],
+    exposedHeaders: ['X-Request-Id', 'Retry-After', 'Content-Disposition'],
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
   })
 );
@@ -58,6 +58,12 @@ app.use(cookieParser());
 
 // 8. General rate limiter
 app.use(generalLimiter);
+
+// Cache-Control: no-store for all API routes
+app.use('/api', (_req: Request, res: Response, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
 
 // Direct root health probes
 app.get('/health', (_req: Request, res: Response) => {

@@ -1,38 +1,69 @@
-// M0: Core TypeScript Types and Interfaces
-export interface User {
+export type TxType = 'INCOME' | 'EXPENSE';
+
+export interface Envelope<T = unknown, M = unknown> {
+  data: T | null;
+  meta: M | null;
+  error: ApiErrorBody | null;
+}
+
+export interface ApiErrorBody {
+  code: string;
+  message: string;
+  details?: unknown;
+}
+
+export interface FieldError {
+  field: string;
+  message: string;
+}
+
+export interface SafeUser {
   id: string;
-  email: string;
   name: string;
+  email: string;
+  currency: string;
+  timezone: string;
+  alertThresholds: number[];
+  alertInAppEnabled: boolean;
+  alertEmailEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SessionData {
+  user: SafeUser;
+  accessToken: string;
+  expiresIn: number;
+}
+
+export interface CategoryUsage {
+  transactions: number;
+  recurringRules: number;
+  budgets: number;
 }
 
 export interface Category {
   id: string;
+  userId: string;
   name: string;
-  type: 'INCOME' | 'EXPENSE';
-  icon?: string;
-  color?: string;
+  type: TxType;
+  color: string;
+  icon: string;
+  isDefault: boolean;
+  isArchived: boolean;
+  parentId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  usage?: CategoryUsage;
+  canDelete?: boolean;
 }
 
-export interface Transaction {
-  id: string;
-  categoryId: string;
-  amount: number;
-  type: 'INCOME' | 'EXPENSE';
-  date: string;
-  notes?: string;
-}
-
-export interface Budget {
-  id: string;
-  categoryId: string;
-  amount: number;
-  period: 'MONTHLY' | 'YEARLY';
-}
-
-export interface Goal {
-  id: string;
-  title: string;
-  targetAmount: number;
-  currentAmount: number;
-  deadline?: string;
+export interface CategoryDeleteResult {
+  deleted: boolean;
+  reassigned?: {
+    transactions: number;
+    recurringRules: number;
+    budgetsMoved: number;
+    budgetsMerged: number;
+  };
 }

@@ -10,6 +10,9 @@ import budgetRoutes from './budget.routes';
 import alertRoutes from './alert.routes';
 import recurringRoutes from './recurring.routes';
 import goalRoutes from './goal.routes';
+import analyticsRoutes from './analytics.routes';
+import importExportRoutes from './importExport.routes';
+import reportRoutes from './report.routes';
 
 const router = Router();
 
@@ -38,6 +41,9 @@ router.get('/health/ready', async (_req: Request, res: Response) => {
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/categories', categoryRoutes);
+router.use('/analytics', analyticsRoutes);
+router.use('/reports', reportRoutes);
+router.use('/transactions', importExportRoutes);
 router.use('/transactions', requireAuth, transactionRoutes);
 router.use('/budgets', requireAuth, budgetRoutes);
 router.use('/alerts', requireAuth, alertRoutes);

@@ -135,12 +135,61 @@ export const LIMITS = {
 
   PERF: {
     // From success criteria: read target within 300 ms
-    READ_TARGET_MS: 300
+    READ_TARGET_MS: 300,
+    ANALYTICS_MAX_MS: 300
   },
 
   PAGINATION: {
     DEFAULT_PAGE: 1,
     DEFAULT_PAGE_SIZE: 20,
     MAX_PAGE_SIZE: 100
+  },
+
+  IMPORT: {
+    MAX_FILE_BYTES: 5 * 1024 * 1024, // 5 MB
+    MAX_ROWS: 5000,
+    CHUNK_SIZE: 1000,
+    PREVIEW_LIMIT: 20,
+    PREVIEW_MAX_ERRORS: 20,
+    DUPLICATE_WINDOW_DAYS: 3,
+    UNDO_MAX_AGE_DAYS: 7
+  },
+
+  EXPORT: {
+    MAX_ROWS: 50000,
+    CHUNK_SIZE: 1000,
+    DEFAULT_FILENAME: 'transactions.csv'
+  },
+
+  CSV: {
+    FORMULA_CHARS: ['=', '+', '-', '@', '\t', '\r'] as const
+  },
+
+  ANALYTICS: {
+    TREND_MAX_MONTHS: 36,
+    TREND_MAX_DAYS: 90,
+    TOP_CATEGORIES_LIMIT: 5
+  },
+
+  REPORT: {
+    DEFAULT_HISTORICAL_MONTHS: 12,
+    MAX_HISTORICAL_MONTHS: 36,
+    DUE_LOOKBACK_MONTHS: 2
+  },
+
+  DIGEST: {
+    BATCH_SIZE: 50
+  },
+
+  CLEANUP: {
+    BATCH_SIZE: 500,
+    REFRESH_TOKEN_GRACE_DAYS: 30,
+    JOB_RUN_RETENTION_DAYS: 90,
+    READ_ALERT_RETENTION_DAYS: 60,
+    AUDIT_LOG_RETENTION_DAYS: 180
+  },
+
+  COVERAGE: {
+    MIN_PERCENT: 70
   }
 } as const;

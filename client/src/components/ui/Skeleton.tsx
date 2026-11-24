@@ -1,6 +1,15 @@
-// M0: UI Skeleton Loader Component
 import React from 'react';
+import { clsx } from 'clsx';
 
-export const Skeleton: React.FC<{ className?: string }> = ({ className }) => {
-  return <div className={`animate-pulse bg-gray-200 rounded ${className || 'h-4 w-full'}`} />;
+export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
+  className?: string;
+}
+
+export const Skeleton: React.FC<SkeletonProps> = ({ className, ...props }) => {
+  return (
+    <div
+      className={clsx('animate-pulse bg-hairline/60 rounded-sm', className)}
+      {...props}
+    />
+  );
 };

@@ -1,48 +1,75 @@
-name: CI Pipeline
+name: FinTrack CI
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [ main, develop ]
   pull_request:
-    branches: [main, master, develop]
+    branches: [ main, develop ]
 
 jobs:
-  lint-and-test:
+  build-and-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: fintrack
+          POSTGRES_PASSWORD: fintrack_dev
+          POSTGRES_DB: fintrack
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
           cache: 'npm'
+          cache-dependency-path: server/package-lock.json
 
-      - name: Install Root & Backend Dependencies
-        run: |
-          cd server
-          npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Lint Server
-        run: |
-          cd server
-          npm run lint --if-present
+      - name: Verify TypeScript types
+        run: npm run typecheck
 
-      - name: Run Server Tests
-        run: |
-          cd server
-          npm test --if-present
+      - name: Run Prisma Migrations
+        env:
+          DATABASE_URL: "postgresql://fintrack:fintrack_dev@localhost:5432/fintrack"
+        run: npx prisma migrate deploy
 
-      - name: Install Frontend Dependencies
-        run: |
-          cd client
-          npm ci
+      - name: Seed default categories
+        env:
+          DATABASE_URL: "postgresql://fintrack:fintrack_dev@localhost:5432/fintrack"
+        run: npm run db:seed
 
-      - name: Lint Client
-        run: |
-          cd client
-          npm run lint --if-present
+      - name: Verify Database schema and constraints
+        env:
+          DATABASE_URL: "postgresql://fintrack:fintrack_dev@localhost:5432/fintrack"
+        run: npm run db:verify
 
-      - name: Build Client
-        run: |
-          cd client
-          npm run build --if-present
+      - name: Run Full Smoke Test Suite (B1 - B4)
+        env:
+          DATABASE_URL: "postgresql://fintrack:fintrack_dev@localhost:5432/fintrack"
+          JWT_ACCESS_SECRET: "fintrack_super_secret_jwt_access_key_min_32_chars_long"
+          CLIENT_URL: "http://localhost:5173"
+        run: npm run test:all
+
+      - name: Verify Test Coverage
+        env:
+          DATABASE_URL: "postgresql://fintrack:fintrack_dev@localhost:5432/fintrack"
+          JWT_ACCESS_SECRET: "fintrack_super_secret_jwt_access_key_min_32_chars_long"
+          CLIENT_URL: "http://localhost:5173"
+        run: npm run test:coverage

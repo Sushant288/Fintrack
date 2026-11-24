@@ -10,6 +10,7 @@ import {
   todayInTimeZone
 } from '../utils/dates';
 import { formatMoney, parseMoney, percentOf, sumMoney } from '../utils/money';
+import { withRetry } from '../utils/retry';
 import { AlertDto } from './alert.service';
 import { assertCategoryUsable } from './category.service';
 import { createTransactionInTx } from './transaction.service';
@@ -189,16 +190,22 @@ export async function lockGoal(
   userId: string,
   id: string
 ): Promise<any> {
-  const rows = await tx.$queryRaw<{ id: string }[]>`
-    SELECT id FROM "SavingsGoal" WHERE id = ${id} AND "userId" = ${userId} FOR UPDATE
+  const rows = await tx.$queryRaw<any[]>`
+    SELECT id, "userId", name, "targetAmount", "currentAmount", deadline, icon, color, status, "createdAt", "updatedAt"
+    FROM "SavingsGoal"
+    WHERE id = ${id} AND "userId" = ${userId}
+    FOR UPDATE
   `;
   if (rows.length === 0) {
     throw ApiError.notFound(ERROR_CODES.GOAL_NOT_FOUND, 'Savings goal not found');
   }
 
-  return tx.savingsGoal.findUniqueOrThrow({
-    where: { id }
-  });
+  const r = rows[0];
+  return {
+    ...r,
+    targetAmount: new Prisma.Decimal(r.targetAmount),
+    currentAmount: new Prisma.Decimal(r.currentAmount)
+  };
 }
 
 /**
@@ -281,7 +288,7 @@ export async function contributeInTx(
   const updatedGoal = await tx.savingsGoal.update({
     where: { id: goalId },
     data: {
-      currentAmount: newCurrent,
+      currentAmount: { increment: delta },
       status: newStatus
     },
     include: {
@@ -387,11 +394,18 @@ export class GoalService {
     input: ContributeGoalInput,
     now: Date = new Date()
   ): Promise<{ contribution: ContributionDto; goal: GoalDto; alerts: AlertDto[] }> {
-    return prisma.$transaction(
-      (tx) => contributeInTx(tx, userId, goalId, input, now),
+    return withRetry(
+      () =>
+        prisma.$transaction(
+          (tx) => contributeInTx(tx, userId, goalId, input, now),
+          {
+            timeout: LIMITS.DB.TRANSACTION_TIMEOUT_MS,
+            maxWait: LIMITS.DB.TRANSACTION_MAX_WAIT_MS
+          }
+        ),
       {
-        timeout: LIMITS.DB.TRANSACTION_TIMEOUT_MS,
-        maxWait: LIMITS.DB.TRANSACTION_MAX_WAIT_MS
+        maxRetries: LIMITS.JOB.MAX_RETRIES,
+        baseMs: LIMITS.JOB.RETRY_BASE_MS
       }
     );
   }

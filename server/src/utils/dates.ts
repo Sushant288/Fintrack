@@ -1,3 +1,5 @@
+import { LIMITS } from '../config/limits';
+
 /**
  * FinTrack Date Utilities
  * 
@@ -205,4 +207,167 @@ export function monthLabel(year: number, month: number, locale = 'en-US'): strin
     year: 'numeric',
     timeZone: 'UTC'
   }).format(dt);
+}
+
+/**
+ * Checks if a transaction date is within valid bounds relative to today in the user's timezone.
+ * Returns 'DATE_IN_FUTURE' if ymd > todayYmd, 'DATE_TOO_OLD' if older than maxPastYears, or null if valid.
+ */
+export function dateBoundsError(
+  ymd: string,
+  todayYmd: string,
+  maxPastYears = LIMITS.TRANSACTION.MAX_PAST_YEARS
+): 'DATE_IN_FUTURE' | 'DATE_TOO_OLD' | null {
+  if (ymd > todayYmd) {
+    return 'DATE_IN_FUTURE';
+  }
+  const minAllowed = subtractYears(todayYmd, maxPastYears);
+  if (ymd < minAllowed) {
+    return 'DATE_TOO_OLD';
+  }
+  return null;
+}
+
+/**
+ * Computes the exact UTC Date corresponding to midnight (00:00:00) on a given YYYY-MM-DD in timezone tz.
+ * Handles DST shifts cleanly using a 2-pass adjustment.
+ */
+export function zonedMidnightToUtc(tz: string, ymd: string): Date {
+  const [y, m, d] = ymd.split('-').map(Number);
+  let utcMs = Date.UTC(y, m - 1, d, 0, 0, 0, 0);
+
+  const getLocalParts = (ms: number) => {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    const parts = formatter.formatToParts(new Date(ms));
+    const findPart = (type: string) => {
+      const v = parts.find((p) => p.type === type)?.value || '0';
+      return v === '24' ? 0 : Number(v);
+    };
+    const py = findPart('year');
+    const pm = findPart('month');
+    const pd = findPart('day');
+    const ph = findPart('hour');
+    const pmin = findPart('minute');
+    const ps = findPart('second');
+    return Date.UTC(py, pm - 1, pd, ph, pmin, ps, 0);
+  };
+
+  const targetLocalMs = Date.UTC(y, m - 1, d, 0, 0, 0, 0);
+  // Pass 1
+  let localMs = getLocalParts(utcMs);
+  let diff = localMs - targetLocalMs;
+  utcMs -= diff;
+
+  // Pass 2 (DST shift correction)
+  localMs = getLocalParts(utcMs);
+  diff = localMs - targetLocalMs;
+  utcMs -= diff;
+
+  return new Date(utcMs);
+}
+
+/**
+ * Returns UTC instant bounds [start, endExclusive) for a given calendar month in timezone tz.
+ */
+export function monthInstantRange(
+  tz: string,
+  year: number,
+  month: number
+): { start: Date; endExclusive: Date } {
+  const startYmd = `${year}-${String(month).padStart(2, '0')}-01`;
+  const nextMonthYear = month === MONTHS_PER_YEAR ? year + 1 : year;
+  const nextMonthNum = month === MONTHS_PER_YEAR ? 1 : month + 1;
+  const endYmd = `${nextMonthYear}-${String(nextMonthNum).padStart(2, '0')}-01`;
+
+  return {
+    start: zonedMidnightToUtc(tz, startYmd),
+    endExclusive: zonedMidnightToUtc(tz, endYmd)
+  };
+}
+
+/**
+ * Returns the current local hour (0-23) in timezone tz for a given instant.
+ */
+export function localHour(tz: string, now: Date = new Date()): number {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    hour: 'numeric',
+    hour12: false
+  });
+  const val = formatter.format(now);
+  const n = Number(val);
+  return n === 24 ? 0 : n;
+}
+
+/**
+ * Returns the Monday YYYY-MM-DD of the week containing the given date.
+ */
+export function weekStart(ymd: string): string {
+  const dt = parseYmd(ymd);
+  const day = dt.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  const offset = day === 0 ? -6 : 1 - day;
+  return formatYmd(addDays(dt, offset));
+}
+
+/**
+ * Generates all calendar dates between from and to inclusive as YYYY-MM-DD strings.
+ */
+export function eachDay(from: string, to: string): string[] {
+  const dates: string[] = [];
+  let cur = parseYmd(from);
+  const end = parseYmd(to);
+  while (cur <= end) {
+    dates.push(formatYmd(cur));
+    cur = addDays(cur, 1);
+  }
+  return dates;
+}
+
+/**
+ * Generates Monday YYYY-MM-DD strings for each week between from and to inclusive.
+ */
+export function eachWeekStart(from: string, to: string): string[] {
+  const start = weekStart(from);
+  const end = weekStart(to);
+  const weeks: string[] = [];
+  let cur = parseYmd(start);
+  const endDt = parseYmd(end);
+  while (cur <= endDt) {
+    weeks.push(formatYmd(cur));
+    cur = addDays(cur, DAYS_PER_WEEK);
+  }
+  return weeks;
+}
+
+/**
+ * Generates an array of months between fromYm and toYm inclusive ("YYYY-MM").
+ */
+export function eachMonth(
+  fromYm: string,
+  toYm: string
+): { year: number; month: number; key: string }[] {
+  const [startY, startM] = fromYm.split('-').map(Number);
+  const [endY, endM] = toYm.split('-').map(Number);
+  const months: { year: number; month: number; key: string }[] = [];
+  let y = startY;
+  let m = startM;
+  while (y < endY || (y === endY && m <= endM)) {
+    const key = `${y}-${String(m).padStart(2, '0')}`;
+    months.push({ year: y, month: m, key });
+    m++;
+    if (m > MONTHS_PER_YEAR) {
+      m = 1;
+      y++;
+    }
+  }
+  return months;
 }

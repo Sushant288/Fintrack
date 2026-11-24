@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import multer from 'multer';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
 import { ApiError, ERROR_CODES, ERROR_MESSAGES } from '../utils/ApiError';
@@ -43,6 +44,24 @@ export function errorHandler(
       ERROR_CODES.VALIDATION_ERROR,
       ERROR_MESSAGES.VALIDATION_ERROR,
       details
+    );
+  }
+
+  // Multer errors
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return fail(
+        res,
+        413,
+        ERROR_CODES.PAYLOAD_TOO_LARGE,
+        ERROR_MESSAGES.PAYLOAD_TOO_LARGE
+      );
+    }
+    return fail(
+      res,
+      400,
+      ERROR_CODES.IMPORT_FILE_INVALID,
+      err.message || ERROR_MESSAGES.IMPORT_FILE_INVALID
     );
   }
 
